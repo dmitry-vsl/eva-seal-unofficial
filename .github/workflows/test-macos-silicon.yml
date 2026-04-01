@@ -1,0 +1,23 @@
+name: Test macOS Silicon
+
+on:
+  workflow_dispatch:
+  push:
+
+jobs:
+  test:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: System info
+        run: |
+          uname -a
+          arch
+          sw_vers
+          sysctl -n machdep.cpu.brand_string
+
+      - name: Check Python
+        run: |
+          python3 --version
+          python3 -c "import platform; print(platform.machine())"
