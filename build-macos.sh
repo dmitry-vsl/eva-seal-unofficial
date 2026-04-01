@@ -32,8 +32,8 @@ sed -i '' '7a\
 # Patch cpu_affinity() which is not available on macOS
 sed -i '' 's/len(psutil.Process().cpu_affinity())/psutil.cpu_count(logical=False)/' python/eva/__init__.py
 
-# Build EVA
-cmake -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -B build .
+# Build EVA with Galois multicore support
+cmake -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DUSE_GALOIS=ON -B build .
 cmake --build build -j"$NPROC"
 
 # Set up venv for building and testing

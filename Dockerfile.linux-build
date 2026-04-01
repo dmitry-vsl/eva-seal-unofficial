@@ -5,6 +5,7 @@ RUN apt-get update && apt-get install -y \
     clang \
     git \
     libboost-all-dev \
+    libzstd-dev \
     protobuf-compiler \
     python3-dev \
     python3-pip \
@@ -49,8 +50,9 @@ RUN sed -i 's/find_package(SEAL 3.6/find_package(SEAL 4.1/' CMakeLists.txt
 # Patch EVA for missing <cstdint> include
 RUN sed -i '7a #include <cstdint>' eva/ckks/ckks_config.h
 
-# Build EVA
+# Build EVA with Galois multicore support
 RUN cmake -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+          -DUSE_GALOIS=ON \
           -B build . && \
     cmake --build build -j$(nproc)
 
