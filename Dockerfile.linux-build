@@ -28,7 +28,6 @@ RUN git clone -b v3.21.12 --depth 1 https://github.com/protocolbuffers/protobuf.
 # Build SEAL 4.1.2
 RUN git clone -b v4.1.2 https://github.com/microsoft/SEAL.git /tmp/SEAL && \
     cd /tmp/SEAL && \
-    sed -i '9a #include <mutex>' native/src/seal/util/locks.h && \
     cmake -DSEAL_THROW_ON_TRANSPARENT_CIPHERTEXT=OFF \
           -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
           -B build . && \
@@ -47,7 +46,7 @@ RUN cd third_party/pybind11 && git fetch --tags && git checkout v2.13.6
 # Patch EVA to find SEAL 4.x
 RUN sed -i 's/find_package(SEAL 3.6/find_package(SEAL 4.1/' CMakeLists.txt
 
-# Patch EVA for GCC 14 (missing <cstdint> include)
+# Patch EVA for missing <cstdint> include
 RUN sed -i '7a #include <cstdint>' eva/ckks/ckks_config.h
 
 # Build EVA

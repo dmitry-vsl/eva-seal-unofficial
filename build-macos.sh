@@ -9,9 +9,6 @@ brew install cmake boost protobuf
 # Build SEAL 4.1.2
 git clone -b v4.1.2 --depth 1 https://github.com/microsoft/SEAL.git /tmp/SEAL
 cd /tmp/SEAL
-sed -i '' '9a\
-#include <mutex>
-' native/src/seal/util/locks.h
 cmake -DSEAL_THROW_ON_TRANSPARENT_CIPHERTEXT=OFF -DSEAL_USE_ZLIB=OFF -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -B build .
 cmake --build build -j"$NPROC"
 sudo cmake --install build
