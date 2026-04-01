@@ -12,7 +12,7 @@ cd /tmp/SEAL
 sed -i '' '9a\
 #include <mutex>
 ' native/src/seal/util/locks.h
-cmake -DSEAL_THROW_ON_TRANSPARENT_CIPHERTEXT=OFF -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -B build .
+cmake -DSEAL_THROW_ON_TRANSPARENT_CIPHERTEXT=OFF -DSEAL_BUILD_DEPS=OFF -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -B build .
 cmake --build build -j"$NPROC"
 sudo cmake --install build
 
