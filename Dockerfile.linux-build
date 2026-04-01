@@ -2,7 +2,7 @@ FROM debian:trixie
 
 RUN apt-get update && apt-get install -y \
     cmake \
-    g++ \
+    clang \
     git \
     libboost-all-dev \
     protobuf-compiler \
@@ -11,6 +11,8 @@ RUN apt-get update && apt-get install -y \
     python3-venv \
     python3-setuptools \
     && rm -rf /var/lib/apt/lists/*
+
+ENV CC=clang CXX=clang++
 
 # Build protobuf 3.21.12 with -fPIC for static linking into shared objects
 RUN git clone -b v3.21.12 --depth 1 https://github.com/protocolbuffers/protobuf.git /tmp/protobuf && \
