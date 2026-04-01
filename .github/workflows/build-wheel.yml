@@ -10,14 +10,14 @@ jobs:
     strategy:
       matrix:
         include:
-          #- platform: linux-x86_64
-          #  runner: ubuntu-24.04
-          #  script: docker build --output type=local,dest=./dist - < Dockerfile.linux-build
-          #  artifact-path: dist/*.whl
-          #- platform: linux-aarch64
-          #  runner: ubuntu-24.04-arm
-          #  script: docker build --output type=local,dest=./dist - < Dockerfile.linux-build
-          #  artifact-path: dist/*.whl
+          - platform: linux-x86_64
+            runner: ubuntu-24.04
+            script: docker build --output type=local,dest=./dist - < Dockerfile.linux-build
+            artifact-path: dist/*.whl
+          - platform: linux-aarch64
+            runner: ubuntu-24.04-arm
+            script: docker build --output type=local,dest=./dist - < Dockerfile.linux-build
+            artifact-path: dist/*.whl
           - platform: macos-arm64
             runner: macos-15
             script: bash build-macos.sh
