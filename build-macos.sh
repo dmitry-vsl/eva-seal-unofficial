@@ -32,6 +32,9 @@ sed -i '' '7a\
 #include <cstdint>
 ' eva/ckks/ckks_config.h
 
+# Patch cpu_affinity() which is not available on macOS
+sed -i '' 's/len(psutil.Process().cpu_affinity())/psutil.cpu_count(logical=False)/' python/eva/__init__.py
+
 # Build EVA
 cmake -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -B build .
 cmake --build build -j"$NPROC"
