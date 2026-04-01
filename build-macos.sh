@@ -4,7 +4,7 @@ set -euo pipefail
 NPROC=$(sysctl -n hw.ncpu)
 
 # Install dependencies
-brew install cmake boost protobuf llvm
+brew install cmake boost protobuf
 
 # Build SEAL 4.1.2
 git clone -b v4.1.2 --depth 1 https://github.com/microsoft/SEAL.git /tmp/SEAL
@@ -32,10 +32,8 @@ sed -i '' '7a\
 # Patch cpu_affinity() which is not available on macOS
 sed -i '' 's/len(psutil.Process().cpu_affinity())/psutil.cpu_count(logical=False)/' python/eva/__init__.py
 
-# Build EVA with Galois multicore support
-cmake -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DUSE_GALOIS=ON \
-      -DLLVM_DIR="$(brew --prefix llvm)/lib/cmake/llvm" \
-      -B build .
+# Build EVA
+cmake -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -B build .
 cmake --build build -j"$NPROC"
 
 # Set up venv for building and testing
