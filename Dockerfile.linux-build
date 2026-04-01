@@ -53,9 +53,17 @@ RUN cmake -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
           -B build . && \
     cmake --build build -j$(nproc)
 
-# Build wheel
+# Build wheel (use find_namespace_packages to include eva.std)
 RUN pip install --break-system-packages psutil wheel && \
+    sed -i 's/find_packages/find_namespace_packages/' build/python/setup.py && \
     cd build/python && python3 setup.py bdist_wheel --dist-dir=/eva/dist
+
+# Run tests
+RUN \
+  cd /eva \
+  && pip install --break-system-packages -r ./examples/requirements.txt \
+  && pip install --break-system-packages ./dist/*.whl \
+  && python3 tests/all.py
 
 FROM scratch
 COPY --from=0 /eva/dist/*.whl /
