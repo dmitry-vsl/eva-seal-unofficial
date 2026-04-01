@@ -36,15 +36,19 @@ sed -i '' '7a\
 cmake -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -B build .
 cmake --build build -j"$NPROC"
 
+# Set up venv for building and testing
+python3 -m venv /tmp/eva-venv
+source /tmp/eva-venv/bin/activate
+
 # Build wheel (use find_namespace_packages to include eva.std)
-pip install --break-system-packages psutil wheel setuptools
+pip install psutil wheel setuptools
 sed -i '' 's/find_packages/find_namespace_packages/' build/python/setup.py
 cd build/python && python3 setup.py bdist_wheel --dist-dir=/tmp/EVA/dist
 cd /tmp/EVA
 
 # Run tests
-pip install --break-system-packages -r examples/requirements.txt
-pip install --break-system-packages dist/*.whl
+pip install -r examples/requirements.txt
+pip install dist/*.whl
 python3 tests/all.py
 
 echo "Wheel built successfully:"
