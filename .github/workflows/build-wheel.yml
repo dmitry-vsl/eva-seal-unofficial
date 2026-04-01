@@ -1,4 +1,4 @@
-name: Build EVA wheel
+name: Build EVA wheels
 
 on:
   workflow_dispatch:
@@ -10,18 +10,26 @@ jobs:
     strategy:
       matrix:
         include:
-          - arch: x86_64
+          - platform: linux-x86_64
             runner: ubuntu-24.04
-          - arch: aarch64
+            script: docker build --output type=local,dest=./dist - < Dockerfile.linux-build
+            artifact-path: dist/*.whl
+          - platform: linux-aarch64
             runner: ubuntu-24.04-arm
+            script: docker build --output type=local,dest=./dist - < Dockerfile.linux-build
+            artifact-path: dist/*.whl
+          - platform: macos-arm64
+            runner: macos-15
+            script: bash build-macos.sh
+            artifact-path: /tmp/EVA/dist/*.whl
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build wheel
-        run: docker build --output type=local,dest=./dist - < Dockerfile.linux-build
+      - name: Build wheel and run tests
+        run: ${{ matrix.script }}
 
       - name: Upload wheel
         uses: actions/upload-artifact@v4
         with:
-          name: eva-wheel-linux-${{ matrix.arch }}
-          path: dist/*.whl
+          name: eva-wheel-${{ matrix.platform }}
+          path: ${{ matrix.artifact-path }}
