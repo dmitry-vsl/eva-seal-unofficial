@@ -1,0 +1,20 @@
+name: Build EVA wheel (macOS Apple Silicon)
+
+on:
+  workflow_dispatch:
+  push:
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build wheel and run tests
+        run: bash build-macos.sh
+
+      - name: Upload wheel
+        uses: actions/upload-artifact@v4
+        with:
+          name: eva-wheel-macos-arm64
+          path: /tmp/EVA/dist/*.whl
