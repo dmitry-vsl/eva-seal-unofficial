@@ -12,7 +12,7 @@ cd /tmp/SEAL
 sed -i '' '9a\
 #include <mutex>
 ' native/src/seal/util/locks.h
-cmake -DSEAL_THROW_ON_TRANSPARENT_CIPHERTEXT=OFF -B build .
+cmake -DSEAL_THROW_ON_TRANSPARENT_CIPHERTEXT=OFF -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -B build .
 cmake --build build -j"$NPROC"
 sudo cmake --install build
 
@@ -33,7 +33,7 @@ sed -i '' '7a\
 ' eva/ckks/ckks_config.h
 
 # Build EVA
-cmake -B build .
+cmake -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -B build .
 cmake --build build -j"$NPROC"
 
 # Build wheel (use find_namespace_packages to include eva.std)
