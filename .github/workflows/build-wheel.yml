@@ -2,7 +2,7 @@ name: Build EVA wheels
 
 on:
   workflow_dispatch:
-  push:
+  #push:
   release:
     types: [published, edit]
 
