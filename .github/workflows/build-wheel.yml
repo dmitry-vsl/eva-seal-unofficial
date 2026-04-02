@@ -2,6 +2,8 @@ name: Build EVA wheels
 
 on:
   push:
+    branches:
+      - '**'  # exclude tags to avoid double run on release
   workflow_dispatch:
 
 jobs:
