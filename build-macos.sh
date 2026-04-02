@@ -49,6 +49,12 @@ source /tmp/eva-venv/bin/activate
 pip install psutil wheel setuptools
 sed -i '' 's/find_packages/find_namespace_packages/' build/python/setup.py
 sed -i '' "s/name='eva'/name='eva-seal-unofficial'/" build/python/setup.py
+sed -i '' "/setup(/a\\
+    description='Unofficial builds of Microsoft EVA',\\
+    long_description='Unofficial builds of [Microsoft EVA](https://github.com/microsoft/EVA). Built from [eva-seal-unofficial](https://github.com/dmitry-vsl/eva-seal-unofficial).',\\
+    long_description_content_type='text/markdown',\\
+    url='https://github.com/dmitry-vsl/eva-seal-unofficial',
+" build/python/setup.py
 cd build/python && python3 setup.py bdist_wheel --dist-dir=/tmp/EVA/dist
 cd /tmp/EVA
 
