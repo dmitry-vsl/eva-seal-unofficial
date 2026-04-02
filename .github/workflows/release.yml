@@ -1,0 +1,43 @@
+name: Publish to PyPI
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      actions: read
+    steps:
+      - name: Find build run for this commit
+        id: find-run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          RUN_ID=$(gh run list --repo ${{ github.repository }} \
+            --workflow=build-wheel.yml \
+            --commit=${{ github.sha }} \
+            --status=success \
+            --json databaseId -q '.[0].databaseId')
+          if [ -z "$RUN_ID" ]; then
+            echo "No successful build found for commit ${{ github.sha }}"
+            exit 1
+          fi
+          echo "run-id=$RUN_ID" >> $GITHUB_OUTPUT
+
+      - name: Download wheels
+        uses: actions/download-artifact@v4
+        with:
+          run-id: ${{ steps.find-run.outputs.run-id }}
+          github-token: ${{ github.token }}
+          pattern: eva-wheel-*
+          merge-multiple: true
+          path: dist/
+
+      - name: Publish to TestPyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          verbose: true
