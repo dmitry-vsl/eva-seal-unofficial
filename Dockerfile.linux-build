@@ -74,15 +74,21 @@ for pyver in 3.10 3.11 3.12 3.13 3.14; do
   sed -i "s|description='Compiler for the Microsoft SEAL homomorphic encryption library'|description='Unofficial builds of Microsoft EVA',\n    long_description='Unofficial builds of [Microsoft EVA](https://github.com/microsoft/EVA). Built from [eva-seal-unofficial](https://github.com/dmitry-vsl/eva-seal-unofficial).',\n    long_description_content_type='text/markdown',\n    url='https://github.com/dmitry-vsl/eva-seal-unofficial'|" build/python/setup.py
 
   # Build wheel
-  (cd build/python && $PYTHON setup.py bdist_wheel --dist-dir=/eva/dist)
+  (cd build/python && $PYTHON setup.py bdist_wheel --dist-dir=/eva/dist-raw)
 
   # Run tests
   $PYTHON -m pip install -r /eva/examples/requirements.txt
-  $PYTHON -m pip install ./dist/*${cpver}*.whl
+  $PYTHON -m pip install /eva/dist-raw/*${cpver}*.whl
   $PYTHON tests/all.py
   $PYTHON -m pip uninstall -y eva-seal-unofficial
 done
 EOF
+
+# Repair wheels to get manylinux platform tags (PyPI rejects bare linux_* tags)
+RUN /opt/python/cp312-cp312/bin/pip install auditwheel patchelf && \
+    for whl in /eva/dist-raw/*.whl; do \
+      /opt/python/cp312-cp312/bin/auditwheel repair "$whl" --wheel-dir /eva/dist; \
+    done
 
 FROM scratch
 COPY --from=0 /eva/dist/*.whl /
