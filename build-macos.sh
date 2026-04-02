@@ -4,7 +4,7 @@ set -euo pipefail
 NPROC=$(sysctl -n hw.ncpu)
 
 # Install dependencies
-brew install cmake boost protobuf
+brew install cmake boost protobuf llvm
 
 # Build SEAL 4.1.2
 git clone -b v4.1.2 --depth 1 https://github.com/microsoft/SEAL.git /tmp/SEAL
@@ -24,6 +24,9 @@ cd third_party/pybind11 && git fetch --tags && git checkout v2.13.6 && cd ../..
 # Patch for SEAL 4.x
 sed -i '' 's/find_package(SEAL 3.6/find_package(SEAL 4.1/' CMakeLists.txt
 
+# Remove hardcoded numa link (not available on macOS)
+sed -i '' 's/Galois::shmem numa/Galois::shmem/' eva/CMakeLists.txt
+
 # Patch for missing <cstdint>
 sed -i '' '7a\
 #include <cstdint>
@@ -32,8 +35,10 @@ sed -i '' '7a\
 # Patch cpu_affinity() which is not available on macOS
 sed -i '' 's/len(psutil.Process().cpu_affinity())/psutil.cpu_count(logical=False)/' python/eva/__init__.py
 
-# Build EVA
-cmake -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -B build .
+# Build EVA with Galois multicore support
+cmake -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DUSE_GALOIS=ON \
+      -DLLVM_DIR="$(brew --prefix llvm)/lib/cmake/llvm" \
+      -B build .
 cmake --build build -j"$NPROC"
 
 # Set up venv for building and testing
