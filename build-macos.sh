@@ -4,7 +4,7 @@ set -euo pipefail
 NPROC=$(sysctl -n hw.ncpu)
 
 # Install dependencies
-brew install cmake boost protobuf llvm
+brew install cmake boost protobuf llvm python@3.10 python@3.11 python@3.12 python@3.13 python@3.14
 
 # Build SEAL 4.1.2
 git clone -b v4.1.2 --depth 1 https://github.com/microsoft/SEAL.git /tmp/SEAL
@@ -35,33 +35,46 @@ sed -i '' '7a\
 # Patch cpu_affinity() which is not available on macOS
 sed -i '' 's/len(psutil.Process().cpu_affinity())/psutil.cpu_count(logical=False)/' python/eva/__init__.py
 
-# Build EVA with Galois multicore support
-cmake -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DUSE_GALOIS=ON \
-      -DLLVM_DIR="$(brew --prefix llvm)/lib/cmake/llvm" \
-      -B build .
-cmake --build build -j"$NPROC"
+# Build wheels for all Python versions
+for pyver in 3.10 3.11 3.12 3.13 3.14; do
+  echo "=== Building for Python $pyver ==="
 
-# Set up venv for building and testing
-python3 -m venv /tmp/eva-venv
-source /tmp/eva-venv/bin/activate
+  PYTHON_BIN="$(brew --prefix python@$pyver)/bin/python$pyver"
 
-# Build wheel (use find_namespace_packages to include eva.std)
-pip install psutil wheel setuptools
-sed -i '' 's/find_packages/find_namespace_packages/' build/python/setup.py
-sed -i '' "s/name='eva'/name='eva-seal-unofficial'/" build/python/setup.py
-sed -i '' "/setup(/a\\
+  # Clean previous build
+  rm -rf build
+
+  # Build EVA with Galois multicore support
+  cmake -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DUSE_GALOIS=ON \
+        -DLLVM_DIR="$(brew --prefix llvm)/lib/cmake/llvm" \
+        -DPython3_EXECUTABLE="$PYTHON_BIN" \
+        -B build .
+  cmake --build build -j"$NPROC"
+
+  # Set up venv for building and testing
+  rm -rf /tmp/eva-venv
+  "$PYTHON_BIN" -m venv /tmp/eva-venv
+  source /tmp/eva-venv/bin/activate
+
+  # Build wheel
+  pip install psutil wheel setuptools
+  sed -i '' 's/find_packages/find_namespace_packages/' build/python/setup.py
+  sed -i '' "s/name='eva'/name='eva-seal-unofficial'/" build/python/setup.py
+  sed -i '' "/setup(/a\\
     description='Unofficial builds of Microsoft EVA',\\
     long_description='Unofficial builds of [Microsoft EVA](https://github.com/microsoft/EVA). Built from [eva-seal-unofficial](https://github.com/dmitry-vsl/eva-seal-unofficial).',\\
     long_description_content_type='text/markdown',\\
     url='https://github.com/dmitry-vsl/eva-seal-unofficial',
 " build/python/setup.py
-cd build/python && python3 setup.py bdist_wheel --dist-dir=/tmp/EVA/dist
-cd /tmp/EVA
+  cd build/python && python setup.py bdist_wheel --dist-dir=/tmp/EVA/dist && cd /tmp/EVA
 
-# Run tests
-pip install -r examples/requirements.txt
-pip install dist/*.whl
-python3 tests/all.py
+  # Run tests
+  pip install -r examples/requirements.txt
+  pip install dist/*cp${pyver/./}*.whl
+  python tests/all.py
 
-echo "Wheel built successfully:"
+  deactivate
+done
+
+echo "Wheels built successfully:"
 ls /tmp/EVA/dist/*.whl
