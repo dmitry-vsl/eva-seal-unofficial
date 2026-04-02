@@ -47,7 +47,7 @@ for pyver in 3.10 3.11 3.12 3.13 3.14; do
   # Build EVA with Galois multicore support
   cmake -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DUSE_GALOIS=ON \
         -DLLVM_DIR="$(brew --prefix llvm)/lib/cmake/llvm" \
-        -DPython3_EXECUTABLE="$PYTHON_BIN" \
+        -DPython_EXECUTABLE="$PYTHON_BIN" \
         -B build .
   cmake --build build -j"$NPROC"
 
@@ -60,12 +60,10 @@ for pyver in 3.10 3.11 3.12 3.13 3.14; do
   pip install psutil wheel setuptools
   sed -i '' 's/find_packages/find_namespace_packages/' build/python/setup.py
   sed -i '' "s/name='eva'/name='eva-seal-unofficial'/" build/python/setup.py
-  sed -i '' "/setup(/a\\
-    description='Unofficial builds of Microsoft EVA',\\
+  sed -i '' "s|description='Compiler for the Microsoft SEAL homomorphic encryption library'|description='Unofficial builds of Microsoft EVA',\\
     long_description='Unofficial builds of [Microsoft EVA](https://github.com/microsoft/EVA). Built from [eva-seal-unofficial](https://github.com/dmitry-vsl/eva-seal-unofficial).',\\
     long_description_content_type='text/markdown',\\
-    url='https://github.com/dmitry-vsl/eva-seal-unofficial',
-" build/python/setup.py
+    url='https://github.com/dmitry-vsl/eva-seal-unofficial'|" build/python/setup.py
   cd build/python && python setup.py bdist_wheel --dist-dir=/tmp/EVA/dist && cd /tmp/EVA
 
   # Run tests

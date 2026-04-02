@@ -1,12 +1,8 @@
 FROM quay.io/pypa/manylinux_2_28
 
-RUN dnf install -y boost-devel zstd libzstd-devel && dnf clean all
+RUN dnf install -y boost-devel zstd libzstd-devel clang llvm-devel numactl-devel && dnf clean all
 
 ENV CC=clang CXX=clang++
-
-# Install cmake via pip
-RUN /opt/python/cp312-cp312/bin/pip install cmake && \
-    ln -s /opt/python/cp312-cp312/bin/cmake /usr/local/bin/cmake
 
 # Build protobuf 3.21.12 with -fPIC for static linking into shared objects
 RUN git clone -b v3.21.12 --depth 1 https://github.com/protocolbuffers/protobuf.git /tmp/protobuf && \
@@ -43,15 +39,20 @@ RUN sed -i 's/find_package(SEAL 3.6/find_package(SEAL 4.1/' CMakeLists.txt
 # Patch EVA for missing <cstdint> include
 RUN sed -i '7a #include <cstdint>' eva/ckks/ckks_config.h
 
+# Patch FindPython to not require libpython (not available in manylinux)
+RUN sed -i 's/find_package(Python COMPONENTS Interpreter Development)/find_package(Python COMPONENTS Interpreter Development.Module)/' CMakeLists.txt
+
 # Build wheels for all Python versions
 RUN <<'EOF'
 set -euo pipefail
 for pyver in 3.10 3.11 3.12 3.13 3.14; do
   cpver="cp${pyver/./}"
   PYTHON="/opt/python/${cpver}-${cpver}/bin/python"
+  PYTHON_ROOT="/opt/python/${cpver}-${cpver}"
+  PYTHON_INCLUDE="$($PYTHON -c "import sysconfig; print(sysconfig.get_path('include'))")"
   echo "=== Building for Python $pyver ($PYTHON) ==="
 
-  $PYTHON -m pip install psutil wheel
+  $PYTHON -m pip install psutil wheel setuptools
 
   # Clean previous build
   rm -rf build
@@ -59,24 +60,23 @@ for pyver in 3.10 3.11 3.12 3.13 3.14; do
   # Build EVA with Galois multicore support
   cmake -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
         -DUSE_GALOIS=ON \
-        -DPython3_EXECUTABLE=$PYTHON \
+        -DPython_ROOT_DIR=$PYTHON_ROOT \
+        -DPython_EXECUTABLE=$PYTHON \
+        -DPython_INCLUDE_DIR=$PYTHON_INCLUDE \
+        -DPYTHON_EXECUTABLE=$PYTHON \
         -B build .
   cmake --build build -j$(nproc)
 
   # Patch setup.py
   sed -i 's/find_packages/find_namespace_packages/' build/python/setup.py
   sed -i "s/name='eva'/name='eva-seal-unofficial'/" build/python/setup.py
-  sed -i "/setup(/a\\
-    description='Unofficial builds of Microsoft EVA',\\
-    long_description='Unofficial builds of [Microsoft EVA](https://github.com/microsoft/EVA). Built from [eva-seal-unofficial](https://github.com/dmitry-vsl/eva-seal-unofficial).',\\
-    long_description_content_type='text/markdown',\\
-    url='https://github.com/dmitry-vsl/eva-seal-unofficial'," build/python/setup.py
+  sed -i "s|description='Compiler for the Microsoft SEAL homomorphic encryption library'|description='Unofficial builds of Microsoft EVA',\n    long_description='Unofficial builds of [Microsoft EVA](https://github.com/microsoft/EVA). Built from [eva-seal-unofficial](https://github.com/dmitry-vsl/eva-seal-unofficial).',\n    long_description_content_type='text/markdown',\n    url='https://github.com/dmitry-vsl/eva-seal-unofficial'|" build/python/setup.py
 
   # Build wheel
-  cd build/python && $PYTHON setup.py bdist_wheel --dist-dir=/eva/dist && cd /eva
+  (cd build/python && $PYTHON setup.py bdist_wheel --dist-dir=/eva/dist)
 
   # Run tests
-  $PYTHON -m pip install -r ./examples/requirements.txt
+  $PYTHON -m pip install -r /eva/examples/requirements.txt
   $PYTHON -m pip install ./dist/*${cpver}*.whl
   $PYTHON tests/all.py
   $PYTHON -m pip uninstall -y eva-seal-unofficial
