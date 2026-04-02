@@ -48,6 +48,7 @@ source /tmp/eva-venv/bin/activate
 # Build wheel (use find_namespace_packages to include eva.std)
 pip install psutil wheel setuptools
 sed -i '' 's/find_packages/find_namespace_packages/' build/python/setup.py
+sed -i '' "s/name='eva'/name='eva-seal-unofficial'/" build/python/setup.py
 cd build/python && python3 setup.py bdist_wheel --dist-dir=/tmp/EVA/dist
 cd /tmp/EVA
 
