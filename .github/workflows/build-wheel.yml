@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
   release:
-    types: [published]
+    types: [published, edit]
 
 jobs:
   build:
@@ -54,3 +54,4 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           repository-url: https://test.pypi.org/legacy/
+          verbose: true
