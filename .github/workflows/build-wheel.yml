@@ -3,6 +3,8 @@ name: Build EVA wheels
 on:
   workflow_dispatch:
   push:
+  release:
+    types: [published]
 
 jobs:
   build:
@@ -33,3 +35,23 @@ jobs:
         with:
           name: eva-wheel-${{ matrix.platform }}
           path: ${{ matrix.artifact-path }}
+
+  publish:
+    needs: build
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    environment: pypi
+    steps:
+      - name: Download all wheels
+        uses: actions/download-artifact@v4
+        with:
+          pattern: eva-wheel-*
+          merge-multiple: true
+          path: dist/
+
+      - name: Publish to TestPyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
