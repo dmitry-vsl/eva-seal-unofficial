@@ -65,6 +65,7 @@ for pyver in 3.10 3.11 3.12 3.13 3.14; do
         -DPython_INCLUDE_DIR=$PYTHON_INCLUDE \
         -DPYTHON_EXECUTABLE=$PYTHON \
         -B build .
+  # PYTHON_EXECUTABLE (all caps) is needed separately for pybind11's FindPythonLibsNew
   cmake --build build -j$(nproc)
 
   # Patch setup.py

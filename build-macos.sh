@@ -48,8 +48,9 @@ for pyver in 3.10 3.11 3.12 3.13 3.14; do
   cmake -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DUSE_GALOIS=ON \
         -DLLVM_DIR="$(brew --prefix llvm)/lib/cmake/llvm" \
         -DPython_EXECUTABLE="$PYTHON_BIN" \
-        -DPYTHON_EXECUTABLE="$PYTHON_BIN" \  # needed separately for pybind11's FindPythonLibsNew
+        -DPYTHON_EXECUTABLE="$PYTHON_BIN" \
         -B build .
+  # PYTHON_EXECUTABLE (all caps) is needed separately for pybind11's FindPythonLibsNew
   cmake --build build -j"$NPROC"
 
   # Set up venv for building and testing
